@@ -1,6 +1,16 @@
 // create a scene
 let gameScene = new Phaser.Scene("Game");
 
+gameScene.init = function () {
+  // player speed
+  this.playerSpeed = 3;
+  this.enemyMinSpeed = 2;
+  this.enemyMaxSpeed = 5;
+
+  this.enemyMinY = 80;
+  this.enemyMaxY = 280;
+};
+
 // load assets
 gameScene.preload = function () {
   // load images
@@ -25,34 +35,65 @@ gameScene.create = function () {
   bg.setPosition(gameW / 2, gameH / 2);
 
   // create player
-  this.player = this.add.sprite(50, 180, "player");
+  this.player = this.add.sprite(50, gameH / 2, "player");
   this.player.scale = 0.6;
   console.log(this.player);
 
   // create an enemy
-  this.enemy1 = this.add.sprite(175, 180, "enemy");
-  this.enemy1.flipX = true;
-  this.enemy1.scale = 0.7;
+  this.enemy = this.add.sprite(150, gameH / 2, "enemy");
+  this.enemy.flipX = true;
+  this.enemy.scale = 0.7;
 
-  this.enemy2 = this.add.sprite(320, 180, "enemy");
-  this.enemy2.flipX = true;
-  this.enemy2.scale = 0.7;
+  // set the enemy speed
+  let dir = Math.random() < 0.5 ? 1 : -1;
+  let speed =
+    this.enemyMinSpeed +
+    Math.random() * (this.enemyMaxSpeed - this.enemyMinSpeed);
+  this.enemy.speed = dir * speed;
+  console.log(speed);
+  // this.enemy2 = this.add.sprite(320, 180, "enemy");
+  // this.enemy2.flipX = true;
+  // this.enemy2.scale = 0.7;
 
-  this.enemy3 = this.add.sprite(450, 180, "enemy");
-  this.enemy3.flipX = true;
-  this.enemy3.scale = 0.7;
+  // this.enemy3 = this.add.sprite(450, 180, "enemy");
+  // this.enemy3.flipX = true;
+  // this.enemy3.scale = 0.7;
 
   // create treasure chest
-  this.treasure = this.add.sprite(550, 180, "treasure");
+  this.treasure = this.add.sprite(gameW - 80, gameH / 2, "treasure");
   this.treasure.scale = 0.6;
 };
-
 
 //update
 gameScene.update = function () {
   // this.enemy1.y -= 0.5;
-  if(this.enemy1.scale < 2){
-    this.enemy1.scale += 0.01
+
+  // check for active input
+  if (this.input.activePointer.isDown) {
+    // player walks
+    this.player.x += this.playerSpeed;
+  }
+
+  // treasure overlap check
+  let playerRect = this.player.getBounds();
+  let treasureRect = this.treasure.getBounds();
+
+  if (Phaser.Geom.Intersects.RectangleToRectangle(playerRect, treasureRect)) {
+    console.log("reached the goal");
+
+    // restart the scene
+    this.scene.restart();
+    return;
+  }
+
+  // enemy movement
+  this.enemy.y += this.enemy.speed;
+
+  let conditionUp = this.enemy.speed < 0 && this.enemy.y <= this.enemyMinY;
+  let conditionDown = this.enemy.speed > 0 && this.enemy.y >= this.enemyMaxY;
+
+  if (conditionUp || conditionDown) {
+    this.enemy.speed *= -1;
   }
 };
 
